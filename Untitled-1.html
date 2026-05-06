@@ -97,6 +97,22 @@
                 </div>
             </div>
         </section>
+         <section class="comments-section">
+            <h2 class="section-title dark-blue">💬 Комментарии</h2>
+            
+            <div class="comments-wrapper">
+                <textarea id="commentInput" class="comment-input" placeholder="Оставьте ваш комментарий..." rows="3"></textarea>
+                
+                <div class="comments-buttons">
+                    <button id="addCommentBtn" class="like-btn">➕ Добавить комментарий</button>
+                    <button id="deleteLastBtn" class="toggle-btn">🗑️ Удалить последний</button>
+                </div>
+                
+                <ul id="commentList" class="comment-list">
+                    <li class="comment-item">✨ Оставьте первый комментарий!</li>
+                </ul>
+            </div>
+        </section>
     </main>
 
     <footer class="footer">
@@ -127,6 +143,86 @@
                 toggleBtn.textContent = 'Показать увлечения';
             }
         });
+         let commentsArray = [];
+        
+        // Элементы DOM
+        const commentInput = document.getElementById('commentInput');
+        const addCommentBtn = document.getElementById('addCommentBtn');
+        const deleteLastBtn = document.getElementById('deleteLastBtn');
+        const commentList = document.getElementById('commentList');
+        
+        function renderComments() {
+            // Очищаем список
+            commentList.innerHTML = '';
+            
+            if (commentsArray.length === 0) {
+                const emptyItem = document.createElement('li');
+                emptyItem.className = 'comment-item empty-comment';
+                emptyItem.textContent = '💬 Пока нет комментариев. Будьте первым!';
+                commentList.appendChild(emptyItem);
+                return;
+            }
+            
+            commentsArray.forEach((commentText, index) => {
+                const li = document.createElement('li');
+                li.className = 'comment-item';
+                
+                li.innerHTML = `
+                    <div class="comment-avatar">👤</div>
+                    <div class="comment-content">
+                        <div class="comment-author">Посетитель ${index + 1}</div>
+                        <div class="comment-text">${escapeHtml(commentText)}</div>
+                    </div>
+                `;
+                commentList.appendChild(li);
+            });
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function addComment() {
+            const commentText = commentInput.value.trim();
+            
+            // Проверяем, что комментарий не пустой
+            if (commentText === '') {
+                alert('Пожалуйста, введите текст комментария!');
+                return;
+            }
+            
+            commentsArray.push(commentText);
+            
+
+            renderComments();
+            
+            commentInput.value = '';
+        }
+        
+        function deleteLastComment() {
+            if (commentsArray.length === 0) {
+                alert('Нет комментариев для удаления!');
+                return;
+            }
+            
+            commentsArray.pop();
+        
+            renderComments();
+        }
+        
+        addCommentBtn.addEventListener('click', addComment);
+        deleteLastBtn.addEventListener('click', deleteLastComment);
+        
+        commentInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !event.ctrlKey && !event.shiftKey) {
+                event.preventDefault();
+                addComment();
+            }
+        });
+        
+        renderComments();
     </script>
 </body>
 </html>

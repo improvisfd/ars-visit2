@@ -367,3 +367,32 @@ body {
         font-size: 28px;
     }
 }
+.sort-buttons {
+    display: flex;
+    gap: 12px;
+    margin: 15px 0 20px 0;
+    justify-content: flex-end;
+}
+
+.sort-btn {
+    background-color: transparent;
+    border: 1.5px solid #003cff;
+    color: #003cff;
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sort-btn:hover {
+    background-color: #003cff;
+    color: white;
+}
+
+.comment-date {
+    font-size: 0.7rem;
+    color: #8a99b0;
+    margin-top: 5px;
+}

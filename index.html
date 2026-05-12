@@ -14,7 +14,7 @@
         </header>
 
         <div class="photo-wrapper">
-            <img src="file:///C:/практика/арс.jpg" alt="Арсений Попов" class="profile-img" onerror="this.onerror=null; this.src='https://via.placeholder.com/250x250?text=Фото+Арсения'; this.style.objectFit='cover';">
+            <img src="арс.jpg" alt="Арсений Попов" class="profile-img" onerror="this.onerror=null; this.src='https://via.placeholder.com/250x250?text=Фото+Арсения'; this.style.objectFit='cover';">
         </div>
 
          <div class="likes-section">
@@ -97,7 +97,8 @@
                 </div>
             </div>
         </section>
-         <section class="comments-section">
+
+        <section class="comments-section">
             <h2 class="section-title dark-blue">💬 Комментарии</h2>
             
             <div class="comments-wrapper">
@@ -106,6 +107,11 @@
                 <div class="comments-buttons">
                     <button id="addCommentBtn" class="like-btn">➕ Добавить комментарий</button>
                     <button id="deleteLastBtn" class="toggle-btn">🗑️ Удалить последний</button>
+                </div>
+                
+                <div class="sort-buttons">
+                    <button id="sortNewBtn" class="sort-btn">📅 Сначала новые</button>
+                    <button id="sortOldBtn" class="sort-btn">📅 Сначала старые</button>
                 </div>
                 
                 <ul id="commentList" class="comment-list">
@@ -118,17 +124,25 @@
     <footer class="footer">
         <p>© Арсений Попов · Творческий путь</p>
     </footer>
+
     <script>
         const likeButton = document.getElementById('likeButton');
         const likeCountSpan = document.getElementById('likeCount');
         
-        const randomLikes = Math.floor(Math.random() * 96) + 5;
-        likeCountSpan.textContent = randomLikes;
+        let savedLikes = localStorage.getItem('likesCount');
+        if (savedLikes !== null) {
+            likeCountSpan.textContent = savedLikes;
+        } else {
+            const randomLikes = Math.floor(Math.random() * 96) + 5;
+            likeCountSpan.textContent = randomLikes;
+            localStorage.setItem('likesCount', randomLikes);
+        }
         
         likeButton.addEventListener('click', function() {
             let currentLikes = parseInt(likeCountSpan.textContent);
             currentLikes = currentLikes + 1;
             likeCountSpan.textContent = currentLikes;
+            localStorage.setItem('likesCount', currentLikes);
         });
         
         const toggleBtn = document.getElementById('toggleHobbyBtn');
@@ -143,16 +157,48 @@
                 toggleBtn.textContent = 'Показать увлечения';
             }
         });
-         let commentsArray = [];
         
-        // Элементы DOM
+        let commentsArray = [];
+        let currentSort = 'new';
+        
         const commentInput = document.getElementById('commentInput');
         const addCommentBtn = document.getElementById('addCommentBtn');
         const deleteLastBtn = document.getElementById('deleteLastBtn');
         const commentList = document.getElementById('commentList');
+        const sortNewBtn = document.getElementById('sortNewBtn');
+        const sortOldBtn = document.getElementById('sortOldBtn');
+        
+        const savedComments = localStorage.getItem('commentsArray');
+        if (savedComments !== null) {
+            commentsArray = JSON.parse(savedComments);
+            commentsArray = commentsArray.map(comment => ({
+                ...comment,
+                date: new Date(comment.date)
+            }));
+        }
+        
+        const savedSort = localStorage.getItem('currentSort');
+        if (savedSort !== null) {
+            currentSort = savedSort;
+        }
+        
+        function formatDate(date) {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const commentDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            
+            const diffDays = Math.floor((today - commentDate) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) {
+                return `сегодня, ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+            } else if (diffDays === 1) {
+                return `вчера, ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+            } else {
+                return `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}, ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+            }
+        }
         
         function renderComments() {
-            // Очищаем список
             commentList.innerHTML = '';
             
             if (commentsArray.length === 0) {
@@ -163,15 +209,25 @@
                 return;
             }
             
-            commentsArray.forEach((commentText, index) => {
+            let sortedComments = [...commentsArray];
+            if (currentSort === 'new') {
+                sortedComments.sort((a, b) => b.date - a.date);
+            } else {
+                sortedComments.sort((a, b) => a.date - b.date);
+            }
+            
+            sortedComments.forEach((comment) => {
                 const li = document.createElement('li');
                 li.className = 'comment-item';
+                
+                const dateStr = formatDate(comment.date);
                 
                 li.innerHTML = `
                     <div class="comment-avatar">👤</div>
                     <div class="comment-content">
-                        <div class="comment-author">Посетитель ${index + 1}</div>
-                        <div class="comment-text">${escapeHtml(commentText)}</div>
+                        <div class="comment-author">Посетитель</div>
+                        <div class="comment-text">${escapeHtml(comment.text)}</div>
+                        <div class="comment-date">📅 ${dateStr}</div>
                     </div>
                 `;
                 commentList.appendChild(li);
@@ -184,20 +240,28 @@
             return div.innerHTML;
         }
         
+        function saveCommentsToStorage() {
+            localStorage.setItem('commentsArray', JSON.stringify(commentsArray));
+            localStorage.setItem('currentSort', currentSort);
+        }
+        
         function addComment() {
             const commentText = commentInput.value.trim();
             
-            // Проверяем, что комментарий не пустой
             if (commentText === '') {
                 alert('Пожалуйста, введите текст комментария!');
                 return;
             }
             
-            commentsArray.push(commentText);
+            const now = new Date();
+            const commentObj = {
+                text: commentText,
+                date: now
+            };
             
-
+            commentsArray.push(commentObj);
+            saveCommentsToStorage();
             renderComments();
-            
             commentInput.value = '';
         }
         
@@ -208,12 +272,24 @@
             }
             
             commentsArray.pop();
-        
+            saveCommentsToStorage();
             renderComments();
         }
         
         addCommentBtn.addEventListener('click', addComment);
         deleteLastBtn.addEventListener('click', deleteLastComment);
+        
+        sortNewBtn.addEventListener('click', function() {
+            currentSort = 'new';
+            saveCommentsToStorage();
+            renderComments();
+        });
+        
+        sortOldBtn.addEventListener('click', function() {
+            currentSort = 'old';
+            saveCommentsToStorage();
+            renderComments();
+        });
         
         commentInput.addEventListener('keydown', function(event) {
             if (event.key === 'Enter' && !event.ctrlKey && !event.shiftKey) {
